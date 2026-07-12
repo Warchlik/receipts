@@ -1,0 +1,12 @@
+FROM node:24-alpine
+WORKDIR /app
+RUN corepack enable
+
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY apps/api/package.json ./apps/api/
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/ui/package.json ./packages/ui/
+RUN pnpm install --frozen-lockfile
+
+# source mounted as volume at runtime
+CMD ["pnpm", "--filter", "api", "dev"]
