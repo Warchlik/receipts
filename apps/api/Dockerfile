@@ -2,7 +2,6 @@ FROM node:24-alpine AS base
 WORKDIR /app
 RUN corepack enable
 
-# ── deps: install all deps (dev included for build) ──────────────────────────
 FROM base AS deps
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/api/package.json ./apps/api/
@@ -10,14 +9,12 @@ COPY packages/shared/package.json ./packages/shared/
 COPY packages/ui/package.json ./packages/ui/
 RUN pnpm install --frozen-lockfile
 
-# ── builder: compile TypeScript ───────────────────────────────────────────────
 FROM deps AS builder
 COPY apps/api/ ./apps/api/
 COPY packages/shared/ ./packages/shared/
 COPY packages/ui/ ./packages/ui/
 RUN pnpm --filter api build
 
-# ── runner: lean production image ─────────────────────────────────────────────
 FROM node:24-alpine AS runner
 WORKDIR /app
 RUN corepack enable
