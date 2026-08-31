@@ -19,5 +19,21 @@ export const validate =
       return;
     }
 
+    // Zod applies coercions/defaults (e.g. z.coerce.date(), .default()) that
+    // only exist on `result.data` — write them back so handlers see the
+    // parsed values, not the raw request. `req.query` is intentionally
+    // excluded: Express 5 exposes it as a getter-only accessor derived from
+    // `req.url`, so it cannot be reassigned.
+    const data = result.data as { body?: unknown; params?: unknown };
+
+    if (data.body !== undefined) {
+      req.body = data.body;
+    }
+
+    if (data.params !== undefined) {
+      req.params = data.params as Request["params"];
+    }
+
     next();
+
   };

@@ -33,3 +33,6 @@ dist-ssr
 *.tsbuildinfo
 
 flow.md
+
+API_TEST_LOG.md
+NEXT_STEPS.md

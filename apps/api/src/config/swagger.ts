@@ -24,6 +24,18 @@ export const swaggerSpec = swaggerJSDoc({
         name: "Examples",
         description: "Example CRUD endpoints",
       },
+      {
+        name: "Receipts",
+        description: "Receipt splitting endpoints",
+      },
+      {
+        name: "Expenses",
+        description: "Expense line items attached to a receipt",
+      },
+      {
+        name: "Profiles",
+        description: "Current user's profile endpoints",
+      },
     ],
     components: {
       schemas: {
