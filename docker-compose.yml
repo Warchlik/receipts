@@ -1,44 +1,90 @@
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "5m"
+    max-file: "3" 
+
 services:
-  db:
+  recipe-nginx:
+    restart: "always"
+    image: nginx:alpine
+    container_name: recipe-nginx
+    environment:
+      - NGINX_PORT_HTTP=${NGINX_PORT_HTTP}
+      - NGINX_PORT_HTTPS=${NGINX_PORT_HTTPS}
+      - SERVER_NAMES=${SERVER_NAMES}
+      - API_PORT=${API_PORT}
+      - API_NAME=recipes-api
+    ports:
+      - "${NGINX_PORT_HTTP}:${NGINX_PORT_HTTP:-80}"
+      - "${NGINX_PORT_HTTPS}:${NGINX_PORT_HTTPS:-443}"
+    volumes:
+      - ./apps/nginx/nginx.conf:/etc/nginx/templates/default.conf.template
+      - ./apps/nginx/nginx-selfsigned.crt:/etc/nginx/conf.d/nginx-selfsigned.crt
+      - ./apps/nginx/nginx-selfsigned.key:/etc/nginx/conf.d/nginx-selfsigned.key
+      - static_web:/usr/share/nginx/web/dist
+    depends_on:
+      recipe-api:
+        condition: service_healthy
+      recipe-postgres:
+        condition: service_healthy
+    networks:
+      - recipe-network
+
+  recipe-postgres:
     image: postgres:17-alpine
+    container_name: recipe-postgres 
     restart: unless-stopped
-    container_name: recipes_db
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-app_db}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
+    mem_limit: 1g
+    cpus: 2.0
+    logging: *default-logging
+    networks:
+      - receipt-network
 
-  api:
+  recipe-api:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
-    container_name: recipes_api
+    container_name: recipe-api
     restart: unless-stopped
     ports:
       - "3000:3000"
     env_file:
       - apps/api/.env
     depends_on:
-      db:
+      receipt-postgres:
         condition: service_healthy
+    logging: *default-logging
+    networks:
+      - recipe-network
 
-  web:
+  recipe-web:
     build:
-      context: .
-      dockerfile: apps/web/Dockerfile
-    container_name: recipes_web
-    restart: unless-stopped
-    ports:
-      - "80:80"
-    depends_on:
-      - api
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: recipe-web
+    volumes:
+      - static_web:/usr/share/nginx/html
+    logging: *default-logging
+    networks:
+      - recipe-network
 
 volumes:
-  postgres_data:
+  db_data:
+  static_web:
+
+networks:
+  recipe-network:
+    driver: bridge
+    internal: true
