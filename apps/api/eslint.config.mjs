@@ -23,6 +23,7 @@ export default tseslint.config(
       "src/**/*.ts",
       "drizzle.config.ts",
       "vitest.config.ts",
+      "tsup.config.ts",
     ],
     rules: {
       "@typescript-eslint/no-explicit-any": "warn",
@@ -34,6 +35,16 @@ export default tseslint.config(
         },
       ],
       "no-console": "warn",
+    },
+  },
+
+  {
+    files: ["ecosystem.config.cjs"],
+    languageOptions: {
+      globals: {
+        module: "writable",
+        __dirname: "readonly",
+      },
     },
   },
 );
