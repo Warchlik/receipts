@@ -2,17 +2,11 @@ import { ExpensesRepository } from "@/modules/expenses/expenses.repository";
 import { ReceiptsRepository } from "./receipts.repository";
 import { ReceiptMember } from "./receipts.types";
 
-/**
- * Recomputes `amount_owed` for every non-overridden receipt member, following
- * the receipt's `split_type`. Members with `amount_owed_override = true` are
- * never touched — their manually-set amount is subtracted from the pool
- * before the rest is divided (equal mode) or simply left alone (itemized).
- */
 export class SplitEngine {
   constructor(
     private readonly receiptsRepository: ReceiptsRepository,
     private readonly expensesRepository: ExpensesRepository,
-  ) {}
+  ) { }
 
   async recalculate(receiptId: string): Promise<void> {
     const receipt =
@@ -36,16 +30,16 @@ export class SplitEngine {
     const shares =
       receipt.split_type === "equal"
         ? this.recalculateEqual(
-            receipt,
-            members,
-            autoMemberIds,
-            priority,
-          )
+          receipt,
+          members,
+          autoMemberIds,
+          priority,
+        )
         : await this.recalculateItemized(
-            receiptId,
-            autoMemberIds,
-            priority,
-          );
+          receiptId,
+          autoMemberIds,
+          priority,
+        );
 
     await Promise.all(
       autoMemberIds.map((memberId) =>
@@ -60,8 +54,6 @@ export class SplitEngine {
     );
   }
 
-  // Creator first, then earliest-joined — used as the deterministic
-  // rounding-remainder tie-breaker throughout this engine.
   private priorityOrder(
     members: ReceiptMember[],
   ): Map<string, number> {

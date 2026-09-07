@@ -18,7 +18,7 @@ export class InvitesService {
     private readonly invitesRepository: InvitesRepository,
     private readonly receiptsRepository: ReceiptsRepository,
     private readonly receiptsService: ReceiptsService,
-  ) {}
+  ) { }
 
   async createInvite(
     receiptId: string,
@@ -113,15 +113,15 @@ export class InvitesService {
 
     const member = invite.member_id
       ? await this.receiptsService.claimMember(
-          invite.receipt_id,
-          invite.member_id,
-          userId,
-        )
+        invite.receipt_id,
+        invite.member_id,
+        userId,
+      )
       : await this.receiptsService.addAuthUser(
-          invite.receipt_id,
-          invite.created_by,
-          userId,
-        );
+        invite.receipt_id,
+        invite.created_by,
+        userId,
+      );
 
     await this.invitesRepository.markUsed(invite.id);
 

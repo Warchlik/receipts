@@ -19,7 +19,7 @@ export class ExpensesService {
     private readonly expensesRepository: ExpensesRepository,
     private readonly receiptsRepository: ReceiptsRepository,
     private readonly splitEngine: SplitEngine,
-  ) {}
+  ) { }
 
   async getExpenses(
     receiptId: string,

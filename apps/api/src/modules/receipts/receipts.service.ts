@@ -25,7 +25,7 @@ export class ReceiptsService {
   constructor(
     private readonly receiptsRepository: ReceiptsRepository,
     private readonly splitEngine: SplitEngine,
-  ) {}
+  ) { }
 
   async getReceipts(
     userId: string,
@@ -163,9 +163,6 @@ export class ReceiptsService {
         const amountOwed = member.amount_owed ?? 0;
         const paid = member.paid_at !== null;
 
-        // The creator is assumed to have fronted the bill, so their own
-        // amount_owed/paid status is informational only — never counted in
-        // either total, symmetrically with totalOutstanding below.
         if (paid && member.role !== "creator") {
           totalCollected += amountOwed;
         } else if (!paid && member.role !== "creator") {
@@ -207,19 +204,19 @@ export class ReceiptsService {
 
     return data.user_id
       ? this.addAuthUser(
-          id,
-          requesterId,
-          data.user_id,
-          data.role,
-          data.amount_owed,
-        )
+        id,
+        requesterId,
+        data.user_id,
+        data.role,
+        data.amount_owed,
+      )
       : this.addGuest(
-          id,
-          requesterId,
-          data.guest_name!,
-          data.role,
-          data.amount_owed,
-        );
+        id,
+        requesterId,
+        data.guest_name!,
+        data.role,
+        data.amount_owed,
+      );
   }
 
   async addAuthUser(
@@ -362,9 +359,6 @@ export class ReceiptsService {
     let amountOwedChanged = false;
 
     if (data.amount_owed !== undefined) {
-      // Explicit null resets the member back to the split engine's automatic
-      // calculation; a number marks it as a manual override the engine will
-      // never touch again until it's reset.
       updates.amount_owed = data.amount_owed;
       updates.amount_owed_override =
         data.amount_owed !== null;

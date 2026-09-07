@@ -17,7 +17,7 @@ import { PaginationExpenses } from "./expenses.types";
 export class ExpensesController {
   constructor(
     private readonly expensesService: ExpensesService,
-  ) {}
+  ) { }
 
   getExpenses = async (
     req: Request<ListExpensesParams>,

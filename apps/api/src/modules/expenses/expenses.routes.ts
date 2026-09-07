@@ -16,7 +16,6 @@ import { ExpensesController } from "./expenses.controller";
 import { ReceiptsRepository } from "@/modules/receipts/receipts.repository";
 import { SplitEngine } from "@/modules/receipts/split-engine";
 
-// mergeParams: true — needs the parent receipt's `:id` param.
 export const expensesRouter = Router({ mergeParams: true });
 
 const expensesRepository = new ExpensesRepository();

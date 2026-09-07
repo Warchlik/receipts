@@ -10,7 +10,7 @@ import {
 export class InvitesController {
   constructor(
     private readonly invitesService: InvitesService,
-  ) {}
+  ) { }
 
   createInvite = async (
     req: Request<

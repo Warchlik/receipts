@@ -35,7 +35,6 @@ const invitesController = new InvitesController(
   invitesService,
 );
 
-// mergeParams: true — needs the parent receipt's `:id` param.
 export const receiptInvitesRouter = Router({
   mergeParams: true,
 });
@@ -58,9 +57,6 @@ receiptInvitesRouter.post(
   asyncHandler(invitesController.createInvite),
 );
 
-// Unlike every other router in this codebase, this one mixes a public route
-// (getInvitePreview) with a protected one (acceptInvite), so requireAuth is
-// applied per-route instead of router-wide.
 export const invitesRouter = Router();
 
 /**
