@@ -1,21 +1,19 @@
-# shadcn/ui monorepo template
+# receipts
 
-This is a Vite monorepo template with shadcn/ui.
+pnpm/Turborepo monorepo.
 
-## Adding components
+## Packages
 
-To add components to your app, run the following command at the root of your `web` app:
+- `apps/api` — Express + Drizzle + better-auth backend (receipts, members, invites, expense splitting).
+- `packages/shared` — Zod schemas/types shared between the API and its clients.
+
+The web landing page (Next.js) and the mobile app (React Native + Expo) will live here once work on them starts.
+
+## Development
 
 ```bash
-pnpm dlx shadcn@latest add button -c apps/web
+pnpm install
+pnpm dev
 ```
 
-This will place the ui components in the `packages/ui/src/components` directory.
-
-## Using components
-
-To use the components in your app, import them from the `ui` package.
-
-```tsx
-import { Button } from "@workspace/ui/components/button";
-```
+See `apps/api/README.md` and `docker-compose.yml` for running the API against Postgres.
