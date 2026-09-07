@@ -1,4 +1,5 @@
 import { ApiError } from "@/utils/ApiError";
+import { env } from "@/config/env";
 import { generateToken } from "@/utils/token";
 import { ReceiptsRepository } from "@/modules/receipts/receipts.repository";
 import { ReceiptsService } from "@/modules/receipts/receipts.service";
@@ -7,6 +8,7 @@ import { InvitesRepository } from "./invites.repository";
 import {
   InvitePreview,
   ReceiptInvite,
+  ReceiptInviteWithUrl,
 } from "./invites.types";
 
 const INVITE_EXPIRY_DAYS = 7;
@@ -22,7 +24,7 @@ export class InvitesService {
     receiptId: string,
     requesterId: string,
     memberId: string | null,
-  ): Promise<ReceiptInvite> {
+  ): Promise<ReceiptInviteWithUrl> {
     await this.assertIsCreator(receiptId, requesterId);
 
     if (memberId) {
@@ -49,13 +51,18 @@ export class InvitesService {
       expiresAt.getDate() + INVITE_EXPIRY_DAYS,
     );
 
-    return this.invitesRepository.create({
+    const invite = await this.invitesRepository.create({
       receipt_id: receiptId,
       member_id: memberId,
       token: generateToken(),
       created_by: requesterId,
       expires_at: expiresAt,
     });
+
+    return {
+      ...invite,
+      invite_url: `${env.CORS_ORIGIN}/invite/${invite.token}`,
+    };
   }
 
   async getInvitePreview(

@@ -5,6 +5,10 @@ export type ReceiptInvite =
 export type NewReceiptInvite =
   typeof receipt_invites.$inferInsert;
 
+export type ReceiptInviteWithUrl = ReceiptInvite & {
+  invite_url: string;
+};
+
 export type InvitePreview = {
   receiptId: string;
   receiptTitle: string;
