@@ -142,17 +142,15 @@ export class ReceiptsService {
   ): Promise<SettlementSummary> {
     await this.assertIsMember(id, userId);
 
-    const receipt =
-      await this.receiptsRepository.findById(id);
+    const [receipt, membersWithNames] = await Promise.all([
+      this.receiptsRepository.findById(id),
+      this.receiptsRepository.findMembersWithNames(id),
+    ]);
 
     if (!receipt) {
       throw new ApiError(404, "Receipt not found");
     }
 
-    const membersWithNames =
-      await this.receiptsRepository.findMembersWithNames(
-        id,
-      );
     const creator = membersWithNames.find(
       (member) => member.role === "creator",
     );
@@ -165,11 +163,12 @@ export class ReceiptsService {
         const amountOwed = member.amount_owed ?? 0;
         const paid = member.paid_at !== null;
 
-        if (paid) {
+        // The creator is assumed to have fronted the bill, so their own
+        // amount_owed/paid status is informational only — never counted in
+        // either total, symmetrically with totalOutstanding below.
+        if (paid && member.role !== "creator") {
           totalCollected += amountOwed;
-        } else if (member.role !== "creator") {
-          // Only non-creator members owe money — the creator is assumed to
-          // have fronted the bill, so their own amount_owed is informational.
+        } else if (!paid && member.role !== "creator") {
           totalOutstanding += amountOwed;
         }
 
