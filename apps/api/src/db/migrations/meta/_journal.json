@@ -15,6 +15,13 @@
       "when": 1788209028251,
       "tag": "0001_perpetual_stepford_cuckoos",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788787789204,
+      "tag": "0002_receipt_members_and_invites",
+      "breakpoints": true
     }
   ]
 }

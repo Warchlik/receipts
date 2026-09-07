@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { exampleRouter } from "@/modules/example/example.routes";
 import { receiptsRouter } from "@/modules/receipts/receipts.routes";
 import { profilesRouter } from "@/modules/profiles/profiles.routes";
+import { invitesRouter } from "@/modules/invites/invites.routes";
 
 export const apiRoutes = Router();
 
-apiRoutes.use("/examples", exampleRouter);
 apiRoutes.use("/receipts", receiptsRouter);
 apiRoutes.use("/profiles", profilesRouter);
+apiRoutes.use("/invites", invitesRouter);
