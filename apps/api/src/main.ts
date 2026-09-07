@@ -33,7 +33,6 @@ app.use(
 // POST /api/auth/sign-in/email
 // POST /api/auth/sign-out
 // GET /api/auth/session
-
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
 app.use(express.json({ limit: "10mb" }));

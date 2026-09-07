@@ -1,3 +1,4 @@
+import { randomBytes, createHash } from "crypto";
 import type { Request, Response } from "express";
 import { ReceiptsService } from "./receipts.service";
 import {
@@ -14,7 +15,7 @@ import {
   UpdateReceiptParams,
 } from "./receipts.schema";
 import { getPaginationParams } from "@/utils/pagination";
-import { PaginationReceipts } from "./receipts.types";
+import { PaginationReceipts, Receipt } from "./receipts.types";
 
 export class ReceiptsController {
   constructor(private readonly receiptsService: ReceiptsService) { }
@@ -136,4 +137,21 @@ export class ReceiptsController {
       message: "Member removed successfully",
     });
   };
+
+  generateInvateUrl = async (
+    req: Request<any>,
+    res: Response,
+  ) => {
+    const receipt: Receipt = await this.receiptsService.getReceiptById(req.params?.id, req.user!.id)
+    const hash = createHash("sha256").update(`${receipt.id}-${new Date().toString()}`).digest("hex")
+
+    await this.receiptsService.updateReceipt(req.params.id, req.user!.id, {
+      invate_token: hash
+    })
+
+    res.status(200).json({
+      receipt_token: hash
+    })
+  }
 }
+

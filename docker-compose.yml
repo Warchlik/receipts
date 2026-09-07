@@ -86,11 +86,11 @@ services:
     networks:
       - recipe-network
 
-  # recipe-web:
+  # recipe-app:
   #   build:
   #     context: ./web
   #     dockerfile: Dockerfile
-  #   container_name: recipe-web
+  #   container_name: recipe-app
   #   volumes:
   #     - static_web:/usr/share/nginx/html
   #   logging: *default-logging

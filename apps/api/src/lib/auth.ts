@@ -4,8 +4,16 @@ import { db } from "@/db";
 import { env } from "@/config/env";
 import * as schema from "@/db/schema";
 import { profiles } from "@/db/schemas/profiles";
+import { bearer } from "better-auth/plugins";
 
 export const auth = betterAuth({
+  plugins: [bearer()],
+  trustedOrigins: [
+    env.CORS_ORIGIN,
+    env.BETTER_AUTH_URL,
+    "capacitor://localhost",
+    "http://localhost",
+  ],
   baseURL: env.BETTER_AUTH_URL,
   secret: env.BETTER_AUTH_SECRET,
   basePath: "/api/auth",
@@ -16,14 +24,10 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
-  trustedOrigins: [env.CORS_ORIGIN, env.BETTER_AUTH_URL],
-  // trustedOrigins: ["*"]
   databaseHooks: {
     user: {
       create: {
-        after: async (user) => {
-          // Every user gets an empty profile row up front so
-          // `GET /api/profiles/me` never has to special-case "not created yet".
+        after: async (user: any) => {
           await db
             .insert(profiles)
             .values({ id: user.id })

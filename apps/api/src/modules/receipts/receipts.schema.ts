@@ -45,6 +45,12 @@ const receiptBodySchema = z.object({
     .url("Invalid image URL")
     .optional()
     .nullable(),
+
+  invate_token: z
+    .string()
+    .trim()
+    .min(1, "Title is required")
+    .max(255, "Title is too long"),
 });
 
 const receiptRoleSchema = z.enum(["creator", "member"]);

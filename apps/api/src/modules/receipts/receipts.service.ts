@@ -16,7 +16,7 @@ import {
 } from "./receipts.types";
 
 export class ReceiptsService {
-  constructor(private readonly receiptsRepository: ReceiptsRepository) {}
+  constructor(private readonly receiptsRepository: ReceiptsRepository) { }
 
   async getReceipts(
     userId: string,
