@@ -1,7 +1,12 @@
 import { db } from "@/db";
-import { receipt_members, receipts } from "@/db/schema";
+import {
+  receipt_members,
+  receipts,
+  user,
+} from "@/db/schema";
 import { and, count, eq, ilike, isNull } from "drizzle-orm";
 import {
+  MemberWithName,
   NewReceipt,
   NewReceiptMember,
   Receipt,
@@ -128,6 +133,24 @@ export class ReceiptsRepository {
       .select()
       .from(receipt_members)
       .where(eq(receipt_members.receipt_id, receiptId));
+  }
+
+  async findMembersWithNames(
+    receiptId: string,
+  ): Promise<MemberWithName[]> {
+    const rows = await db
+      .select({
+        member: receipt_members,
+        userName: user.name,
+      })
+      .from(receipt_members)
+      .leftJoin(user, eq(receipt_members.user_id, user.id))
+      .where(eq(receipt_members.receipt_id, receiptId));
+
+    return rows.map(({ member, userName }) => ({
+      ...member,
+      name: member.guest_name ?? userName ?? "Unknown",
+    }));
   }
 
   async findMemberByUserId(

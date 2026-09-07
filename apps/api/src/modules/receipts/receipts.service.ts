@@ -12,11 +12,13 @@ import {
   UpdateReceiptInput,
 } from "./receipts.schema";
 import {
+  MemberBalance,
   NewReceipt,
   NewReceiptMember,
   PaginationReceipts,
   Receipt,
   ReceiptMember,
+  SettlementSummary,
 } from "./receipts.types";
 
 export class ReceiptsService {
@@ -132,6 +134,69 @@ export class ReceiptsService {
     await this.assertIsMember(id, userId);
 
     return this.receiptsRepository.findMembers(id);
+  }
+
+  async getSettlement(
+    id: string,
+    userId: string,
+  ): Promise<SettlementSummary> {
+    await this.assertIsMember(id, userId);
+
+    const receipt =
+      await this.receiptsRepository.findById(id);
+
+    if (!receipt) {
+      throw new ApiError(404, "Receipt not found");
+    }
+
+    const membersWithNames =
+      await this.receiptsRepository.findMembersWithNames(
+        id,
+      );
+    const creator = membersWithNames.find(
+      (member) => member.role === "creator",
+    );
+
+    let totalCollected = 0;
+    let totalOutstanding = 0;
+
+    const members: MemberBalance[] = membersWithNames.map(
+      (member) => {
+        const amountOwed = member.amount_owed ?? 0;
+        const paid = member.paid_at !== null;
+
+        if (paid) {
+          totalCollected += amountOwed;
+        } else if (member.role !== "creator") {
+          // Only non-creator members owe money — the creator is assumed to
+          // have fronted the bill, so their own amount_owed is informational.
+          totalOutstanding += amountOwed;
+        }
+
+        return {
+          memberId: member.id,
+          name: member.name,
+          role: member.role,
+          amountOwed,
+          paid,
+          paidAt: member.paid_at,
+          owesTo:
+            member.role === "creator"
+              ? null
+              : (creator?.id ?? null),
+        };
+      },
+    );
+
+    return {
+      receiptId: receipt.id,
+      currency: receipt.currency,
+      totalAmount: receipt.amount,
+      totalCollected,
+      totalOutstanding,
+      isSettled: totalOutstanding === 0,
+      members,
+    };
   }
 
   async addMember(

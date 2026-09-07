@@ -7,6 +7,7 @@ import {
   CreateReceiptInput,
   DeleteReceiptInput,
   GetReceiptByIdInput,
+  GetSettlementParams,
   ListMembersParams,
   RemoveMemberParams,
   UpdateMemberInput,
@@ -110,6 +111,20 @@ export class ReceiptsController {
     );
 
     res.status(200).json({ success: true, data: members });
+  };
+
+  getSettlement = async (
+    req: Request<GetSettlementParams>,
+    res: Response,
+  ) => {
+    const { id } = req.params;
+    const summary =
+      await this.receiptsService.getSettlement(
+        id,
+        req.user!.id,
+      );
+
+    res.status(200).json({ success: true, data: summary });
   };
 
   addMember = async (

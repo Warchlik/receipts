@@ -11,3 +11,27 @@ export type NewReceiptMember =
 
 export type PaginationReceipts =
   PaginationResponse<Receipt>;
+
+export type MemberWithName = ReceiptMember & {
+  name: string;
+};
+
+export type MemberBalance = {
+  memberId: string;
+  name: string;
+  role: ReceiptMember["role"];
+  amountOwed: number;
+  paid: boolean;
+  paidAt: Date | null;
+  owesTo: string | null;
+};
+
+export type SettlementSummary = {
+  receiptId: string;
+  currency: string;
+  totalAmount: number;
+  totalCollected: number;
+  totalOutstanding: number;
+  isSettled: boolean;
+  members: MemberBalance[];
+};

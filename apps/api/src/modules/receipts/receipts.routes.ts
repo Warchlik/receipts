@@ -8,6 +8,7 @@ import {
   createReceiptSchema,
   deleteReceiptSchema,
   getReceiptByIdSchema,
+  getSettlementSchema,
   listMembersSchema,
   removeMemberSchema,
   updateMemberSchema,
@@ -134,6 +135,22 @@ receiptsRouter.get(
   "/:id/members",
   validate(listMembersSchema),
   asyncHandler(receiptsController.listMembers),
+);
+
+/**
+ * @openapi
+ * /api/receipts/{id}/settlement:
+ *   get:
+ *     summary: Who owes what to the creator, and how much has been collected
+ *     tags: [Receipts]
+ *     responses:
+ *       200:
+ *         description: Settlement summary
+ */
+receiptsRouter.get(
+  "/:id/settlement",
+  validate(getSettlementSchema),
+  asyncHandler(receiptsController.getSettlement),
 );
 
 /**
