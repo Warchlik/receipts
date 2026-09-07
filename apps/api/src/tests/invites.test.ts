@@ -48,6 +48,9 @@ describe("Invites", () => {
     expect(response.status).toBe(201);
     expect(response.body.data.member_id).toBe(guest.id);
     expect(response.body.data.token).toBeTruthy();
+    expect(response.body.data.invite_url).toBe(
+      `http://localhost:5173/invite/${response.body.data.token}`,
+    );
   });
 
   it("exposes a public preview of an invite without auth", async () => {
