@@ -197,9 +197,6 @@ export class ReceiptsRepository {
       .where(
         and(
           eq(receipt_members.receipt_id, receiptId),
-          // Case-insensitive exact match — NOT ilike(), whose "guestName" would
-          // otherwise be interpreted as a LIKE pattern, so a guest literally
-          // named "J_n" or "%" would falsely collide with unrelated names.
           eq(
             sql`lower(${receipt_members.guest_name})`,
             guestName.toLowerCase(),
