@@ -25,7 +25,7 @@ export class ReceiptsService {
   constructor(
     private readonly receiptsRepository: ReceiptsRepository,
     private readonly splitEngine: SplitEngine,
-  ) { }
+  ) {}
 
   async getReceipts(
     userId: string,
@@ -204,19 +204,19 @@ export class ReceiptsService {
 
     return data.user_id
       ? this.addAuthUser(
-        id,
-        requesterId,
-        data.user_id,
-        data.role,
-        data.amount_owed,
-      )
+          id,
+          requesterId,
+          data.user_id,
+          "member",
+          data.amount_owed,
+        )
       : this.addGuest(
-        id,
-        requesterId,
-        data.guest_name!,
-        data.role,
-        data.amount_owed,
-      );
+          id,
+          requesterId,
+          data.guest_name!,
+          "member",
+          data.amount_owed,
+        );
   }
 
   async addAuthUser(

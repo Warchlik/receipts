@@ -54,8 +54,6 @@ const receiptBodySchema = z.object({
     .default("manual"),
 });
 
-const receiptRoleSchema = z.enum(["creator", "member"]);
-
 const addMemberBodySchema = z
   .object({
     user_id: z
@@ -68,7 +66,9 @@ const addMemberBodySchema = z
       .min(1, "guest_name is required")
       .max(100, "guest_name is too long")
       .optional(),
-    role: receiptRoleSchema.default("member"),
+    // No `role` field here on purpose: "creator" is assigned exactly once,
+    // at receipt creation — a client-supplied role would let anyone mint
+    // additional co-equal creators via this endpoint.
     amount_owed: z
       .number()
       .int()

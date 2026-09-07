@@ -66,6 +66,28 @@ describe("Receipt members", () => {
     expect(response.body.data.guest_name).toBeNull();
   });
 
+  it("ignores a client-supplied role, never minting a second creator", async () => {
+    const creator = await registerUser();
+    const other = await registerUser();
+    const receipt = await createReceipt(creator.authHeader);
+
+    const response = await request(app)
+      .post(`/api/receipts/${receipt.id}/members`)
+      .set("Authorization", creator.authHeader)
+      .send({ user_id: other.userId, role: "creator" });
+
+    expect(response.status).toBe(201);
+    expect(response.body.data.role).toBe("member");
+
+    // The newly added "member" must not gain creator authority.
+    const hijackAttempt = await request(app)
+      .patch(`/api/receipts/${receipt.id}`)
+      .set("Authorization", other.authHeader)
+      .send({ title: "Hijacked" });
+
+    expect(hijackAttempt.status).toBe(403);
+  });
+
   it("rejects adding the same authenticated user twice", async () => {
     const creator = await registerUser();
     const other = await registerUser();
