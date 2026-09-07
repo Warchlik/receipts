@@ -51,6 +51,32 @@ describe("Receipt members", () => {
     expect(response.body.success).toBe(false);
   });
 
+  it("does not treat SQL LIKE wildcards in a guest name as pattern characters", async () => {
+    const creator = await registerUser();
+    const receipt = await createReceipt(creator.authHeader);
+
+    await request(app)
+      .post(`/api/receipts/${receipt.id}/members`)
+      .set("Authorization", creator.authHeader)
+      .send({ guest_name: "Jan" });
+
+    // "_" and "%" are LIKE wildcards, not literal characters here — these
+    // are different names from "Jan" and must be accepted, not rejected
+    // as if they collided with it.
+    const underscoreResponse = await request(app)
+      .post(`/api/receipts/${receipt.id}/members`)
+      .set("Authorization", creator.authHeader)
+      .send({ guest_name: "J_n" });
+
+    const percentResponse = await request(app)
+      .post(`/api/receipts/${receipt.id}/members`)
+      .set("Authorization", creator.authHeader)
+      .send({ guest_name: "%" });
+
+    expect(underscoreResponse.status).toBe(201);
+    expect(percentResponse.status).toBe(201);
+  });
+
   it("adds an authenticated user as a member", async () => {
     const creator = await registerUser();
     const other = await registerUser();
