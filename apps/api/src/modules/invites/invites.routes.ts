@@ -4,6 +4,8 @@ import { asyncHandler } from "@/utils/asyncHandler";
 import { requireAuth } from "@/modules/auth/auth.middleware";
 import { ReceiptsRepository } from "@/modules/receipts/receipts.repository";
 import { ReceiptsService } from "@/modules/receipts/receipts.service";
+import { SplitEngine } from "@/modules/receipts/split-engine";
+import { ExpensesRepository } from "@/modules/expenses/expenses.repository";
 import {
   acceptInviteSchema,
   createInviteSchema,
@@ -14,8 +16,14 @@ import { InvitesService } from "./invites.service";
 import { InvitesController } from "./invites.controller";
 
 const receiptsRepository = new ReceiptsRepository();
+const expensesRepository = new ExpensesRepository();
+const splitEngine = new SplitEngine(
+  receiptsRepository,
+  expensesRepository,
+);
 const receiptsService = new ReceiptsService(
   receiptsRepository,
+  splitEngine,
 );
 const invitesRepository = new InvitesRepository();
 const invitesService = new InvitesService(

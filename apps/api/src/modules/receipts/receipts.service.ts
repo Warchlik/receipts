@@ -5,6 +5,7 @@ import {
 } from "@/utils/pagination";
 import { stripUndefined } from "@/utils/object";
 import { ReceiptsRepository } from "./receipts.repository";
+import { SplitEngine } from "./split-engine";
 import {
   AddMemberInput,
   UpdateMemberInput,
@@ -21,6 +22,7 @@ import {
 export class ReceiptsService {
   constructor(
     private readonly receiptsRepository: ReceiptsRepository,
+    private readonly splitEngine: SplitEngine,
   ) {}
 
   async getReceipts(
@@ -78,6 +80,8 @@ export class ReceiptsService {
       invited_by: userId,
     });
 
+    await this.splitEngine.recalculate(receipt.id);
+
     return receipt;
   }
 
@@ -95,6 +99,13 @@ export class ReceiptsService {
 
     if (!receipt) {
       throw new ApiError(404, "Receipt not found");
+    }
+
+    if (
+      data.amount !== undefined ||
+      data.split_type !== undefined
+    ) {
+      await this.splitEngine.recalculate(id);
     }
 
     return receipt;
@@ -167,14 +178,19 @@ export class ReceiptsService {
       );
     }
 
-    return this.receiptsRepository.addMember({
+    const member = await this.receiptsRepository.addMember({
       receipt_id: receiptId,
       user_id: userId,
       guest_name: null,
       role: role ?? "member",
       invited_by: requesterId,
       amount_owed: amountOwed ?? null,
+      amount_owed_override: amountOwed != null,
     });
+
+    await this.splitEngine.recalculate(receiptId);
+
+    return member;
   }
 
   private async addGuest(
@@ -197,14 +213,19 @@ export class ReceiptsService {
       );
     }
 
-    return this.receiptsRepository.addMember({
+    const member = await this.receiptsRepository.addMember({
       receipt_id: receiptId,
       user_id: null,
       guest_name: guestName,
       role: role ?? "member",
       invited_by: requesterId,
       amount_owed: amountOwed ?? null,
+      amount_owed_override: amountOwed != null,
     });
+
+    await this.splitEngine.recalculate(receiptId);
+
+    return member;
   }
 
   async claimMember(
@@ -239,6 +260,8 @@ export class ReceiptsService {
       );
     }
 
+    await this.splitEngine.recalculate(receiptId);
+
     return member;
   }
 
@@ -272,9 +295,16 @@ export class ReceiptsService {
     }
 
     const updates: Partial<NewReceiptMember> = {};
+    let amountOwedChanged = false;
 
     if (data.amount_owed !== undefined) {
+      // Explicit null resets the member back to the split engine's automatic
+      // calculation; a number marks it as a manual override the engine will
+      // never touch again until it's reset.
       updates.amount_owed = data.amount_owed;
+      updates.amount_owed_override =
+        data.amount_owed !== null;
+      amountOwedChanged = true;
     }
 
     if (data.paid !== undefined) {
@@ -290,6 +320,18 @@ export class ReceiptsService {
 
     if (!member) {
       throw new ApiError(404, "Member not found");
+    }
+
+    if (amountOwedChanged) {
+      await this.splitEngine.recalculate(id);
+
+      const refreshed =
+        await this.receiptsRepository.findMemberById(
+          id,
+          memberId,
+        );
+
+      return refreshed ?? member;
     }
 
     return member;
@@ -323,6 +365,8 @@ export class ReceiptsService {
       id,
       memberId,
     );
+
+    await this.splitEngine.recalculate(id);
   }
 
   private async assertIsMember(

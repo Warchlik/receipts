@@ -48,6 +48,10 @@ const receiptBodySchema = z.object({
     .url("Invalid image URL")
     .optional()
     .nullable(),
+
+  split_type: z
+    .enum(["equal", "manual", "itemized"])
+    .default("manual"),
 });
 
 const receiptRoleSchema = z.enum(["creator", "member"]);

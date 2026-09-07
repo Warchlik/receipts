@@ -5,6 +5,7 @@ import {
 } from "@/utils/pagination";
 import { stripUndefined } from "@/utils/object";
 import { ReceiptsRepository } from "@/modules/receipts/receipts.repository";
+import { SplitEngine } from "@/modules/receipts/split-engine";
 import { ExpensesRepository } from "./expenses.repository";
 import { UpdateExpenseInput } from "./expenses.schema";
 import {
@@ -17,6 +18,7 @@ export class ExpensesService {
   constructor(
     private readonly expensesRepository: ExpensesRepository,
     private readonly receiptsRepository: ReceiptsRepository,
+    private readonly splitEngine: SplitEngine,
   ) {}
 
   async getExpenses(
@@ -72,10 +74,14 @@ export class ExpensesService {
   ): Promise<Expense> {
     await this.assertIsMember(receiptId, userId);
 
-    return this.expensesRepository.create({
+    const expense = await this.expensesRepository.create({
       ...data,
       receipt_id: receiptId,
     });
+
+    await this.splitEngine.recalculate(receiptId);
+
+    return expense;
   }
 
   async updateExpense(
@@ -96,6 +102,10 @@ export class ExpensesService {
       throw new ApiError(404, "Expense not found");
     }
 
+    if (data.amount !== undefined) {
+      await this.splitEngine.recalculate(receiptId);
+    }
+
     return expense;
   }
 
@@ -114,6 +124,50 @@ export class ExpensesService {
     if (!expense) {
       throw new ApiError(404, "Expense not found");
     }
+
+    await this.splitEngine.recalculate(receiptId);
+  }
+
+  async setSplits(
+    receiptId: string,
+    expenseId: string,
+    userId: string,
+    memberIds: string[],
+  ): Promise<void> {
+    await this.assertIsMember(receiptId, userId);
+
+    const expense =
+      await this.expensesRepository.findByIdForReceipt(
+        receiptId,
+        expenseId,
+      );
+
+    if (!expense) {
+      throw new ApiError(404, "Expense not found");
+    }
+
+    const uniqueMemberIds = [...new Set(memberIds)];
+
+    for (const memberId of uniqueMemberIds) {
+      const member =
+        await this.receiptsRepository.findMemberById(
+          receiptId,
+          memberId,
+        );
+
+      if (!member) {
+        throw new ApiError(
+          400,
+          `Member ${memberId} is not part of this receipt`,
+        );
+      }
+    }
+
+    await this.expensesRepository.setSplits(
+      expenseId,
+      uniqueMemberIds,
+    );
+    await this.splitEngine.recalculate(receiptId);
   }
 
   private async assertIsMember(

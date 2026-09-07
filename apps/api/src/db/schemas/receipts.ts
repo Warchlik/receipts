@@ -1,4 +1,5 @@
 import {
+  boolean,
   check,
   integer,
   pgEnum,
@@ -10,6 +11,12 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 import { user } from "./auth";
+
+export const splitTypeEnum = pgEnum("split_type", [
+  "equal",
+  "manual",
+  "itemized",
+]);
 
 export const receipts = pgTable("receipts", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -24,6 +31,10 @@ export const receipts = pgTable("receipts", {
   purchase_at: timestamp("purchase_at"),
 
   receipt_image_url: text("receipt_image_url"),
+
+  split_type: splitTypeEnum("split_type")
+    .notNull()
+    .default("manual"),
 
   created_at: timestamp("created_at")
     .notNull()
@@ -64,6 +75,11 @@ export const receipt_members = pgTable(
       .references(() => user.id),
 
     amount_owed: integer("amount_owed"),
+    // true once amount_owed has been explicitly set via PATCH — the split
+    // engine (see split-engine.ts) never overwrites an overridden member.
+    amount_owed_override: boolean("amount_owed_override")
+      .notNull()
+      .default(false),
     paid_at: timestamp("paid_at"),
     joined_at: timestamp("joined_at")
       .notNull()

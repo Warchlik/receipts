@@ -7,23 +7,32 @@ import {
   deleteExpenseSchema,
   getExpenseByIdSchema,
   listExpensesSchema,
+  setExpenseSplitsSchema,
   updateExpenseSchema,
 } from "./expenses.schema";
 import { ExpensesRepository } from "./expenses.repository";
 import { ExpensesService } from "./expenses.service";
 import { ExpensesController } from "./expenses.controller";
 import { ReceiptsRepository } from "@/modules/receipts/receipts.repository";
+import { SplitEngine } from "@/modules/receipts/split-engine";
 
 // mergeParams: true — needs the parent receipt's `:id` param.
 export const expensesRouter = Router({ mergeParams: true });
 
 const expensesRepository = new ExpensesRepository();
 const receiptsRepository = new ReceiptsRepository();
+const splitEngine = new SplitEngine(
+  receiptsRepository,
+  expensesRepository,
+);
 const expensesService = new ExpensesService(
   expensesRepository,
   receiptsRepository,
+  splitEngine,
 );
-const expensesController = new ExpensesController(expensesService);
+const expensesController = new ExpensesController(
+  expensesService,
+);
 
 expensesRouter.use(requireAuth);
 
@@ -105,4 +114,20 @@ expensesRouter.delete(
   "/:expenseId",
   validate(deleteExpenseSchema),
   asyncHandler(expensesController.deleteExpense),
+);
+
+/**
+ * @openapi
+ * /api/receipts/{id}/expenses/{expenseId}/splits:
+ *   put:
+ *     summary: Replace which members this item's cost is split across
+ *     tags: [Expenses]
+ *     responses:
+ *       200:
+ *         description: Splits updated
+ */
+expensesRouter.put(
+  "/:expenseId/splits",
+  validate(setExpenseSplitsSchema),
+  asyncHandler(expensesController.setSplits),
 );
