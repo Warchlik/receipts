@@ -9,7 +9,19 @@ const expenseIdParams = receiptIdParams.extend({
 });
 
 const expenseBodySchema = z.object({
-  amount: z.number().int().positive("Amount must be a positive integer"),
+  title: z
+    .string()
+    .trim()
+    .min(1, "Title is required")
+    .max(255, "Title is too long"),
+  amount: z
+    .number()
+    .int()
+    .positive("Amount must be a positive integer"),
+});
+
+const setExpenseSplitsBodySchema = z.object({
+  member_ids: z.array(z.string().uuid("Invalid member id")),
 });
 
 export const listExpensesSchema = z.object({
@@ -34,7 +46,14 @@ export const deleteExpenseSchema = z.object({
   params: expenseIdParams,
 });
 
-export type ListExpensesParams = z.infer<typeof listExpensesSchema>["params"];
+export const setExpenseSplitsSchema = z.object({
+  params: expenseIdParams,
+  body: setExpenseSplitsBodySchema,
+});
+
+export type ListExpensesParams = z.infer<
+  typeof listExpensesSchema
+>["params"];
 
 export type GetExpenseByIdParams = z.infer<
   typeof getExpenseByIdSchema
@@ -43,13 +62,24 @@ export type GetExpenseByIdParams = z.infer<
 export type CreateExpenseParams = z.infer<
   typeof createExpenseSchema
 >["params"];
-export type CreateExpenseInput = z.infer<typeof createExpenseSchema>["body"];
+export type CreateExpenseInput = z.infer<
+  typeof createExpenseSchema
+>["body"];
 
 export type UpdateExpenseParams = z.infer<
   typeof updateExpenseSchema
 >["params"];
-export type UpdateExpenseInput = z.infer<typeof updateExpenseSchema>["body"];
+export type UpdateExpenseInput = z.infer<
+  typeof updateExpenseSchema
+>["body"];
 
 export type DeleteExpenseParams = z.infer<
   typeof deleteExpenseSchema
 >["params"];
+
+export type SetExpenseSplitsParams = z.infer<
+  typeof setExpenseSplitsSchema
+>["params"];
+export type SetExpenseSplitsInput = z.infer<
+  typeof setExpenseSplitsSchema
+>["body"];

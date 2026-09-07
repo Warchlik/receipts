@@ -16,14 +16,22 @@ import {
 import { ReceiptsRepository } from "./receipts.repository";
 import { ReceiptsService } from "./receipts.service";
 import { ReceiptsController } from "./receipts.controller";
+import { SplitEngine } from "./split-engine";
+import { ExpensesRepository } from "@/modules/expenses/expenses.repository";
 import { expensesRouter } from "@/modules/expenses/expenses.routes";
 import { receiptInvitesRouter } from "@/modules/invites/invites.routes";
 
 export const receiptsRouter = Router();
 
 const receiptsRepository = new ReceiptsRepository();
+const expensesRepository = new ExpensesRepository();
+const splitEngine = new SplitEngine(
+  receiptsRepository,
+  expensesRepository,
+);
 const receiptsService = new ReceiptsService(
   receiptsRepository,
+  splitEngine,
 );
 const receiptsController = new ReceiptsController(
   receiptsService,

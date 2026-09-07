@@ -22,6 +22,13 @@
       "when": 1788787789204,
       "tag": "0002_receipt_members_and_invites",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788802229856,
+      "tag": "0003_split_modes_and_expense_items",
+      "breakpoints": true
     }
   ]
 }
