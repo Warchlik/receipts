@@ -104,6 +104,48 @@ describe("Settlement", () => {
     expect(response.body.data.totalOutstanding).toBe(0);
   });
 
+  it("excludes the creator's own share from totalCollected even if self-marked paid", async () => {
+    const creator = await registerUser("Alice");
+    const bob = await registerUser("Bob");
+    const receipt = await createReceipt(
+      creator.authHeader,
+      {
+        amount: 100,
+      },
+    );
+
+    const before = await getSettlement(
+      creator.authHeader,
+      receipt.id,
+    );
+    const creatorMemberId = before.body.data.members.find(
+      (m: { role: string }) => m.role === "creator",
+    ).memberId;
+
+    await addAuthMember(
+      creator.authHeader,
+      receipt.id,
+      bob.userId,
+    );
+
+    // Creator marks their own share paid — this must stay purely
+    // informational and never inflate totalCollected.
+    await request(app)
+      .patch(
+        `/api/receipts/${receipt.id}/members/${creatorMemberId}`,
+      )
+      .set("Authorization", creator.authHeader)
+      .send({ paid: true });
+
+    const response = await getSettlement(
+      creator.authHeader,
+      receipt.id,
+    );
+
+    expect(response.body.data.totalCollected).toBe(0);
+    expect(response.body.data.totalOutstanding).toBe(50);
+  });
+
   it("moves a member's share from outstanding to collected once marked paid", async () => {
     const creator = await registerUser("Alice");
     const bob = await registerUser("Bob");
