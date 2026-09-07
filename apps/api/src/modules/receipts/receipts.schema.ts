@@ -121,6 +121,10 @@ export const listMembersSchema = z.object({
   params: receiptIdParams,
 });
 
+export const getSettlementSchema = z.object({
+  params: receiptIdParams,
+});
+
 export const addMemberSchema = z.object({
   params: receiptIdParams,
   body: addMemberBodySchema,
@@ -165,6 +169,10 @@ export type DeleteReceiptInput = z.infer<
 
 export type ListMembersParams = z.infer<
   typeof listMembersSchema
+>["params"];
+
+export type GetSettlementParams = z.infer<
+  typeof getSettlementSchema
 >["params"];
 
 export type AddMemberParams = z.infer<
