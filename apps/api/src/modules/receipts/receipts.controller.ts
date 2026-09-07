@@ -1,9 +1,9 @@
-import { randomBytes, createHash } from "crypto";
 import type { Request, Response } from "express";
 import { ReceiptsService } from "./receipts.service";
 import {
   AddMemberInput,
   AddMemberParams,
+  ClaimMemberParams,
   CreateReceiptInput,
   DeleteReceiptInput,
   GetReceiptByIdInput,
@@ -15,17 +15,20 @@ import {
   UpdateReceiptParams,
 } from "./receipts.schema";
 import { getPaginationParams } from "@/utils/pagination";
-import { PaginationReceipts, Receipt } from "./receipts.types";
+import { PaginationReceipts } from "./receipts.types";
 
 export class ReceiptsController {
-  constructor(private readonly receiptsService: ReceiptsService) { }
+  constructor(
+    private readonly receiptsService: ReceiptsService,
+  ) {}
 
   getReceipts = async (req: Request, res: Response) => {
     const pagination = getPaginationParams(req.query);
-    const result: PaginationReceipts = await this.receiptsService.getReceipts(
-      req.user!.id,
-      pagination,
-    );
+    const result: PaginationReceipts =
+      await this.receiptsService.getReceipts(
+        req.user!.id,
+        pagination,
+      );
 
     res.status(200).json({
       success: true,
@@ -39,10 +42,11 @@ export class ReceiptsController {
     res: Response,
   ) => {
     const { id } = req.params;
-    const receipt = await this.receiptsService.getReceiptById(
-      id,
-      req.user!.id,
-    );
+    const receipt =
+      await this.receiptsService.getReceiptById(
+        id,
+        req.user!.id,
+      );
 
     res.status(200).json({ success: true, data: receipt });
   };
@@ -51,24 +55,30 @@ export class ReceiptsController {
     req: Request<object, object, CreateReceiptInput>,
     res: Response,
   ) => {
-    const receipt = await this.receiptsService.createReceipt(
-      req.user!.id,
-      req.body,
-    );
+    const receipt =
+      await this.receiptsService.createReceipt(
+        req.user!.id,
+        req.body,
+      );
 
     res.status(201).json({ success: true, data: receipt });
   };
 
   updateReceipt = async (
-    req: Request<UpdateReceiptParams, object, UpdateReceiptInput>,
+    req: Request<
+      UpdateReceiptParams,
+      object,
+      UpdateReceiptInput
+    >,
     res: Response,
   ) => {
     const { id } = req.params;
-    const receipt = await this.receiptsService.updateReceipt(
-      id,
-      req.user!.id,
-      req.body,
-    );
+    const receipt =
+      await this.receiptsService.updateReceipt(
+        id,
+        req.user!.id,
+        req.body,
+      );
 
     res.status(200).json({ success: true, data: receipt });
   };
@@ -78,7 +88,10 @@ export class ReceiptsController {
     res: Response,
   ) => {
     const { id } = req.params;
-    await this.receiptsService.deleteReceipt(id, req.user!.id);
+    await this.receiptsService.deleteReceipt(
+      id,
+      req.user!.id,
+    );
 
     res.status(200).json({
       success: true,
@@ -86,7 +99,10 @@ export class ReceiptsController {
     });
   };
 
-  listMembers = async (req: Request<ListMembersParams>, res: Response) => {
+  listMembers = async (
+    req: Request<ListMembersParams>,
+    res: Response,
+  ) => {
     const { id } = req.params;
     const members = await this.receiptsService.listMembers(
       id,
@@ -111,13 +127,17 @@ export class ReceiptsController {
   };
 
   updateMember = async (
-    req: Request<UpdateMemberParams, object, UpdateMemberInput>,
+    req: Request<
+      UpdateMemberParams,
+      object,
+      UpdateMemberInput
+    >,
     res: Response,
   ) => {
-    const { id, userId } = req.params;
+    const { id, memberId } = req.params;
     const member = await this.receiptsService.updateMember(
       id,
-      userId,
+      memberId,
       req.user!.id,
       req.body,
     );
@@ -129,8 +149,12 @@ export class ReceiptsController {
     req: Request<RemoveMemberParams>,
     res: Response,
   ) => {
-    const { id, userId } = req.params;
-    await this.receiptsService.removeMember(id, userId, req.user!.id);
+    const { id, memberId } = req.params;
+    await this.receiptsService.removeMember(
+      id,
+      memberId,
+      req.user!.id,
+    );
 
     res.status(200).json({
       success: true,
@@ -138,20 +162,17 @@ export class ReceiptsController {
     });
   };
 
-  generateInvateUrl = async (
-    req: Request<any>,
+  claimMember = async (
+    req: Request<ClaimMemberParams>,
     res: Response,
   ) => {
-    const receipt: Receipt = await this.receiptsService.getReceiptById(req.params?.id, req.user!.id)
-    const hash = createHash("sha256").update(`${receipt.id}-${new Date().toString()}`).digest("hex")
+    const { id, memberId } = req.params;
+    const member = await this.receiptsService.claimMember(
+      id,
+      memberId,
+      req.user!.id,
+    );
 
-    await this.receiptsService.updateReceipt(req.params.id, req.user!.id, {
-      invate_token: hash
-    })
-
-    res.status(200).json({
-      receipt_token: hash
-    })
-  }
+    res.status(200).json({ success: true, data: member });
+  };
 }
-

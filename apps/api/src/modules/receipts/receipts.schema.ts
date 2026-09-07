@@ -29,7 +29,10 @@ const receiptBodySchema = z.object({
     .length(3, "Currency must be a 3-letter ISO code")
     .default("PLN"),
 
-  people_count: z.number().int().min(1, "At least one person is required"),
+  people_count: z
+    .number()
+    .int()
+    .min(1, "At least one person is required"),
 
   category: z
     .string()
@@ -45,32 +48,49 @@ const receiptBodySchema = z.object({
     .url("Invalid image URL")
     .optional()
     .nullable(),
-
-  invate_token: z
-    .string()
-    .trim()
-    .min(1, "Title is required")
-    .max(255, "Title is too long"),
 });
 
 const receiptRoleSchema = z.enum(["creator", "member"]);
 
-const addMemberBodySchema = z.object({
-  user_id: z.string().min(1, "user_id is required"),
-  role: receiptRoleSchema.default("member"),
-  amount_owed: z
-    .number()
-    .int()
-    .nonnegative("Amount owed must be a non-negative integer")
-    .optional()
-    .nullable(),
-});
+const addMemberBodySchema = z
+  .object({
+    user_id: z
+      .string()
+      .min(1, "user_id is required")
+      .optional(),
+    guest_name: z
+      .string()
+      .trim()
+      .min(1, "guest_name is required")
+      .max(100, "guest_name is too long")
+      .optional(),
+    role: receiptRoleSchema.default("member"),
+    amount_owed: z
+      .number()
+      .int()
+      .nonnegative(
+        "Amount owed must be a non-negative integer",
+      )
+      .optional()
+      .nullable(),
+  })
+  .refine(
+    (data) =>
+      (data.user_id != null) !== (data.guest_name != null),
+    {
+      message:
+        "Provide exactly one of user_id or guest_name",
+      path: ["user_id"],
+    },
+  );
 
 const updateMemberBodySchema = z.object({
   amount_owed: z
     .number()
     .int()
-    .nonnegative("Amount owed must be a non-negative integer")
+    .nonnegative(
+      "Amount owed must be a non-negative integer",
+    )
     .optional()
     .nullable(),
   paid: z.boolean().optional(),
@@ -102,45 +122,65 @@ export const addMemberSchema = z.object({
   body: addMemberBodySchema,
 });
 
+const memberIdParams = receiptIdParams.extend({
+  memberId: z.string().uuid("Invalid member id"),
+});
+
 export const updateMemberSchema = z.object({
-  params: receiptIdParams.extend({
-    userId: z.string().min(1, "Invalid user id"),
-  }),
+  params: memberIdParams,
   body: updateMemberBodySchema,
 });
 
 export const removeMemberSchema = z.object({
-  params: receiptIdParams.extend({
-    userId: z.string().min(1, "Invalid user id"),
-  }),
+  params: memberIdParams,
+});
+
+export const claimMemberSchema = z.object({
+  params: memberIdParams,
 });
 
 export type GetReceiptByIdInput = z.infer<
   typeof getReceiptByIdSchema
 >["params"];
 
-export type CreateReceiptInput = z.infer<typeof createReceiptSchema>["body"];
+export type CreateReceiptInput = z.infer<
+  typeof createReceiptSchema
+>["body"];
 
 export type UpdateReceiptParams = z.infer<
   typeof updateReceiptSchema
 >["params"];
 
-export type UpdateReceiptInput = z.infer<typeof updateReceiptSchema>["body"];
+export type UpdateReceiptInput = z.infer<
+  typeof updateReceiptSchema
+>["body"];
 
 export type DeleteReceiptInput = z.infer<
   typeof deleteReceiptSchema
 >["params"];
 
-export type ListMembersParams = z.infer<typeof listMembersSchema>["params"];
+export type ListMembersParams = z.infer<
+  typeof listMembersSchema
+>["params"];
 
-export type AddMemberParams = z.infer<typeof addMemberSchema>["params"];
-export type AddMemberInput = z.infer<typeof addMemberSchema>["body"];
+export type AddMemberParams = z.infer<
+  typeof addMemberSchema
+>["params"];
+export type AddMemberInput = z.infer<
+  typeof addMemberSchema
+>["body"];
 
 export type UpdateMemberParams = z.infer<
   typeof updateMemberSchema
 >["params"];
-export type UpdateMemberInput = z.infer<typeof updateMemberSchema>["body"];
+export type UpdateMemberInput = z.infer<
+  typeof updateMemberSchema
+>["body"];
 
 export type RemoveMemberParams = z.infer<
   typeof removeMemberSchema
+>["params"];
+
+export type ClaimMemberParams = z.infer<
+  typeof claimMemberSchema
 >["params"];

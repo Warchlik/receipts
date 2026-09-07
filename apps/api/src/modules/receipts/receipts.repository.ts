@@ -1,6 +1,6 @@
 import { db } from "@/db";
-import { receipts, user_receipts } from "@/db/schema";
-import { and, count, eq } from "drizzle-orm";
+import { receipt_members, receipts } from "@/db/schema";
+import { and, count, eq, ilike, isNull } from "drizzle-orm";
 import {
   NewReceipt,
   NewReceiptMember,
@@ -13,8 +13,11 @@ export class ReceiptsRepository {
     const [result] = await db
       .select({ value: count() })
       .from(receipts)
-      .innerJoin(user_receipts, eq(user_receipts.receipt_id, receipts.id))
-      .where(eq(user_receipts.user_id, userId));
+      .innerJoin(
+        receipt_members,
+        eq(receipt_members.receipt_id, receipts.id),
+      )
+      .where(eq(receipt_members.user_id, userId));
 
     return result?.value ?? 0;
   }
@@ -27,8 +30,11 @@ export class ReceiptsRepository {
     const rows = await db
       .select({ receipt: receipts })
       .from(receipts)
-      .innerJoin(user_receipts, eq(user_receipts.receipt_id, receipts.id))
-      .where(eq(user_receipts.user_id, userId))
+      .innerJoin(
+        receipt_members,
+        eq(receipt_members.receipt_id, receipts.id),
+      )
+      .where(eq(receipt_members.user_id, userId))
       .limit(limit)
       .offset(offset);
 
@@ -42,14 +48,34 @@ export class ReceiptsRepository {
     const [row] = await db
       .select({ receipt: receipts })
       .from(receipts)
-      .innerJoin(user_receipts, eq(user_receipts.receipt_id, receipts.id))
-      .where(and(eq(receipts.id, id), eq(user_receipts.user_id, userId)));
+      .innerJoin(
+        receipt_members,
+        eq(receipt_members.receipt_id, receipts.id),
+      )
+      .where(
+        and(
+          eq(receipts.id, id),
+          eq(receipt_members.user_id, userId),
+        ),
+      );
 
     return row?.receipt ?? null;
   }
 
+  async findById(id: string): Promise<Receipt | null> {
+    const [receipt] = await db
+      .select()
+      .from(receipts)
+      .where(eq(receipts.id, id));
+
+    return receipt ?? null;
+  }
+
   async create(data: NewReceipt): Promise<Receipt> {
-    const [receipt] = await db.insert(receipts).values(data).returning();
+    const [receipt] = await db
+      .insert(receipts)
+      .values(data)
+      .returning();
 
     if (!receipt) {
       throw new Error("Failed to create receipt");
@@ -80,8 +106,13 @@ export class ReceiptsRepository {
     return receipt ?? null;
   }
 
-  async addMember(data: NewReceiptMember): Promise<ReceiptMember> {
-    const [member] = await db.insert(user_receipts).values(data).returning();
+  async addMember(
+    data: NewReceiptMember,
+  ): Promise<ReceiptMember> {
+    const [member] = await db
+      .insert(receipt_members)
+      .values(data)
+      .returning();
 
     if (!member) {
       throw new Error("Failed to add receipt member");
@@ -90,24 +121,60 @@ export class ReceiptsRepository {
     return member;
   }
 
-  async findMembers(receiptId: string): Promise<ReceiptMember[]> {
+  async findMembers(
+    receiptId: string,
+  ): Promise<ReceiptMember[]> {
     return db
       .select()
-      .from(user_receipts)
-      .where(eq(user_receipts.receipt_id, receiptId));
+      .from(receipt_members)
+      .where(eq(receipt_members.receipt_id, receiptId));
   }
 
-  async findMember(
+  async findMemberByUserId(
     receiptId: string,
     userId: string,
   ): Promise<ReceiptMember | null> {
     const [member] = await db
       .select()
-      .from(user_receipts)
+      .from(receipt_members)
       .where(
         and(
-          eq(user_receipts.receipt_id, receiptId),
-          eq(user_receipts.user_id, userId),
+          eq(receipt_members.receipt_id, receiptId),
+          eq(receipt_members.user_id, userId),
+        ),
+      );
+
+    return member ?? null;
+  }
+
+  async findMemberById(
+    receiptId: string,
+    memberId: string,
+  ): Promise<ReceiptMember | null> {
+    const [member] = await db
+      .select()
+      .from(receipt_members)
+      .where(
+        and(
+          eq(receipt_members.receipt_id, receiptId),
+          eq(receipt_members.id, memberId),
+        ),
+      );
+
+    return member ?? null;
+  }
+
+  async findGuestByName(
+    receiptId: string,
+    guestName: string,
+  ): Promise<ReceiptMember | null> {
+    const [member] = await db
+      .select()
+      .from(receipt_members)
+      .where(
+        and(
+          eq(receipt_members.receipt_id, receiptId),
+          ilike(receipt_members.guest_name, guestName),
         ),
       );
 
@@ -116,16 +183,16 @@ export class ReceiptsRepository {
 
   async updateMember(
     receiptId: string,
-    userId: string,
+    memberId: string,
     data: Partial<NewReceiptMember>,
   ): Promise<ReceiptMember | null> {
     const [member] = await db
-      .update(user_receipts)
+      .update(receipt_members)
       .set(data)
       .where(
         and(
-          eq(user_receipts.receipt_id, receiptId),
-          eq(user_receipts.user_id, userId),
+          eq(receipt_members.receipt_id, receiptId),
+          eq(receipt_members.id, memberId),
         ),
       )
       .returning();
@@ -133,14 +200,37 @@ export class ReceiptsRepository {
     return member ?? null;
   }
 
-  async removeMember(receiptId: string, userId: string): Promise<void> {
+  async removeMember(
+    receiptId: string,
+    memberId: string,
+  ): Promise<void> {
     await db
-      .delete(user_receipts)
+      .delete(receipt_members)
       .where(
         and(
-          eq(user_receipts.receipt_id, receiptId),
-          eq(user_receipts.user_id, userId),
+          eq(receipt_members.receipt_id, receiptId),
+          eq(receipt_members.id, memberId),
         ),
       );
+  }
+
+  async claimMember(
+    receiptId: string,
+    memberId: string,
+    userId: string,
+  ): Promise<ReceiptMember | null> {
+    const [member] = await db
+      .update(receipt_members)
+      .set({ user_id: userId, guest_name: null })
+      .where(
+        and(
+          eq(receipt_members.receipt_id, receiptId),
+          eq(receipt_members.id, memberId),
+          isNull(receipt_members.user_id),
+        ),
+      )
+      .returning();
+
+    return member ?? null;
   }
 }

@@ -1,10 +1,17 @@
 import { ApiError } from "@/utils/ApiError";
-import { getPaginationMeta, PaginationParams } from "@/utils/pagination";
+import {
+  getPaginationMeta,
+  PaginationParams,
+} from "@/utils/pagination";
 import { stripUndefined } from "@/utils/object";
 import { ReceiptsRepository } from "@/modules/receipts/receipts.repository";
 import { ExpensesRepository } from "./expenses.repository";
 import { UpdateExpenseInput } from "./expenses.schema";
-import { Expense, NewExpense, PaginationExpenses } from "./expenses.types";
+import {
+  Expense,
+  NewExpense,
+  PaginationExpenses,
+} from "./expenses.types";
 
 export class ExpensesService {
   constructor(
@@ -30,7 +37,11 @@ export class ExpensesService {
 
     return {
       data,
-      meta: getPaginationMeta(total, pagination.page, pagination.limit),
+      meta: getPaginationMeta(
+        total,
+        pagination.page,
+        pagination.limit,
+      ),
     };
   }
 
@@ -41,10 +52,11 @@ export class ExpensesService {
   ): Promise<Expense> {
     await this.assertIsMember(receiptId, userId);
 
-    const expense = await this.expensesRepository.findByIdForReceipt(
-      receiptId,
-      id,
-    );
+    const expense =
+      await this.expensesRepository.findByIdForReceipt(
+        receiptId,
+        id,
+      );
 
     if (!expense) {
       throw new ApiError(404, "Expense not found");
@@ -94,7 +106,10 @@ export class ExpensesService {
   ): Promise<void> {
     await this.assertIsMember(receiptId, userId);
 
-    const expense = await this.expensesRepository.delete(receiptId, id);
+    const expense = await this.expensesRepository.delete(
+      receiptId,
+      id,
+    );
 
     if (!expense) {
       throw new ApiError(404, "Expense not found");
@@ -105,10 +120,11 @@ export class ExpensesService {
     receiptId: string,
     userId: string,
   ): Promise<void> {
-    const member = await this.receiptsRepository.findMember(
-      receiptId,
-      userId,
-    );
+    const member =
+      await this.receiptsRepository.findMemberByUserId(
+        receiptId,
+        userId,
+      );
 
     if (!member) {
       throw new ApiError(404, "Receipt not found");

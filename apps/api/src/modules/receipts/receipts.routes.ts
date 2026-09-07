@@ -4,6 +4,7 @@ import { asyncHandler } from "@/utils/asyncHandler";
 import { requireAuth } from "@/modules/auth/auth.middleware";
 import {
   addMemberSchema,
+  claimMemberSchema,
   createReceiptSchema,
   deleteReceiptSchema,
   getReceiptByIdSchema,
@@ -16,12 +17,17 @@ import { ReceiptsRepository } from "./receipts.repository";
 import { ReceiptsService } from "./receipts.service";
 import { ReceiptsController } from "./receipts.controller";
 import { expensesRouter } from "@/modules/expenses/expenses.routes";
+import { receiptInvitesRouter } from "@/modules/invites/invites.routes";
 
 export const receiptsRouter = Router();
 
 const receiptsRepository = new ReceiptsRepository();
-const receiptsService = new ReceiptsService(receiptsRepository);
-const receiptsController = new ReceiptsController(receiptsService);
+const receiptsService = new ReceiptsService(
+  receiptsRepository,
+);
+const receiptsController = new ReceiptsController(
+  receiptsService,
+);
 
 receiptsRouter.use(requireAuth);
 
@@ -35,7 +41,10 @@ receiptsRouter.use(requireAuth);
  *       200:
  *         description: List of receipts
  */
-receiptsRouter.get("/", asyncHandler(receiptsController.getReceipts));
+receiptsRouter.get(
+  "/",
+  asyncHandler(receiptsController.getReceipts),
+);
 
 /**
  * @openapi
@@ -137,7 +146,7 @@ receiptsRouter.post(
 
 /**
  * @openapi
- * /api/receipts/{id}/members/{userId}:
+ * /api/receipts/{id}/members/{memberId}:
  *   patch:
  *     summary: Update a member's owed amount or paid status
  *     tags: [Receipts]
@@ -146,14 +155,14 @@ receiptsRouter.post(
  *         description: Member updated
  */
 receiptsRouter.patch(
-  "/:id/members/:userId",
+  "/:id/members/:memberId",
   validate(updateMemberSchema),
   asyncHandler(receiptsController.updateMember),
 );
 
 /**
  * @openapi
- * /api/receipts/{id}/members/{userId}:
+ * /api/receipts/{id}/members/{memberId}:
  *   delete:
  *     summary: Remove a member from a receipt (creator only)
  *     tags: [Receipts]
@@ -162,10 +171,30 @@ receiptsRouter.patch(
  *         description: Member removed
  */
 receiptsRouter.delete(
-  "/:id/members/:userId",
+  "/:id/members/:memberId",
   validate(removeMemberSchema),
   asyncHandler(receiptsController.removeMember),
 );
 
+/**
+ * @openapi
+ * /api/receipts/{id}/members/{memberId}/claim:
+ *   patch:
+ *     summary: Attach the current user to an existing guest member
+ *     tags: [Receipts]
+ *     responses:
+ *       200:
+ *         description: Member claimed
+ */
+receiptsRouter.patch(
+  "/:id/members/:memberId/claim",
+  validate(claimMemberSchema),
+  asyncHandler(receiptsController.claimMember),
+);
+
 // Expenses are always scoped to a receipt.
 receiptsRouter.use("/:id/expenses", expensesRouter);
+
+// Invites are always scoped to a receipt (creation, at least — accepting
+// an invite is handled by the standalone `invitesRouter`, see routes/index.ts).
+receiptsRouter.use("/:id/invites", receiptInvitesRouter);
