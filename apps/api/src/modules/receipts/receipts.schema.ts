@@ -29,6 +29,8 @@ const receiptBodySchema = z.object({
     .length(3, "Currency must be a 3-letter ISO code")
     .default("PLN"),
 
+  // Static headcount estimate, not reconciled with actual receipt_members —
+  // see the comment on the `people_count` column in db/schemas/receipts.ts.
   people_count: z
     .number()
     .int()

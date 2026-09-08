@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { receipt_invites } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, gt, isNull } from "drizzle-orm";
 import {
   NewReceiptInvite,
   ReceiptInvite,
@@ -20,6 +20,25 @@ export class InvitesRepository {
     }
 
     return invite;
+  }
+
+  async findActiveByMember(
+    receiptId: string,
+    memberId: string,
+  ): Promise<ReceiptInvite | null> {
+    const [invite] = await db
+      .select()
+      .from(receipt_invites)
+      .where(
+        and(
+          eq(receipt_invites.receipt_id, receiptId),
+          eq(receipt_invites.member_id, memberId),
+          isNull(receipt_invites.used_at),
+          gt(receipt_invites.expires_at, new Date()),
+        ),
+      );
+
+    return invite ?? null;
   }
 
   async findByToken(
