@@ -45,8 +45,6 @@ export class InvitesService {
         );
       }
 
-      // Reuse a still-valid invite for this guest instead of minting an
-      // unbounded number of parallel tokens for the same claim.
       const existingInvite =
         await this.invitesRepository.findActiveByMember(
           receiptId,
@@ -155,9 +153,6 @@ export class InvitesService {
         userId,
       );
     } catch (error) {
-      // A second, concurrent accept of this same invite loses the atomic
-      // claim after already passing assertUsable — report it as a stale
-      // invite (409) rather than the generic "member not found" (404).
       if (
         error instanceof ApiError &&
         error.statusCode === 404

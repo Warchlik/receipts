@@ -15,7 +15,6 @@ export const receipt_invites = pgTable("receipt_invites", {
     .notNull()
     .references(() => receipts.id, { onDelete: "cascade" }),
 
-  // Set = claim an existing guest member; null = join as a brand new member.
   member_id: uuid("member_id").references(
     () => receipt_members.id,
     {
