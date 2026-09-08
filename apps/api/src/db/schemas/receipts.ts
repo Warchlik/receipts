@@ -61,6 +61,7 @@ export const receipt_members = pgTable(
         onDelete: "cascade",
       }),
 
+    // Exactly one of user_id / guest_name is set — enforced below and in Zod.
     user_id: text("user_id").references(() => user.id, {
       onDelete: "cascade",
     }),
@@ -74,6 +75,8 @@ export const receipt_members = pgTable(
       .references(() => user.id),
 
     amount_owed: integer("amount_owed"),
+    // true once amount_owed has been explicitly set via PATCH — the split
+    // engine (see split-engine.ts) never overwrites an overridden member.
     amount_owed_override: boolean("amount_owed_override")
       .notNull()
       .default(false),

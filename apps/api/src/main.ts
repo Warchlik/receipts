@@ -11,29 +11,16 @@ import { swaggerSpec } from "./config/swagger";
 import { notFoundMiddleware } from "./middlewares/not-found.middleware";
 import { errorMiddleware } from "./middlewares/error.middleware";
 
-export const app = express();
-
-app.get("/health", (_req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "API is running",
-  });
-});
-
-const authRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 20,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-const apiRateLimiter = rateLimit({
+const rateLimitter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 100,
   standardHeaders: true,
   legacyHeaders: false,
 });
 
+export const app = express();
+
+app.use(rateLimitter);
 app.use(helmet());
 app.use(
   cors({
@@ -42,13 +29,21 @@ app.use(
   }),
 );
 
-app.use("/api/auth", authRateLimiter);
+// POST /api/auth/sign-up/email
+// POST /api/auth/sign-in/email
+// POST /api/auth/sign-out
+// GET /api/auth/session
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/api", apiRateLimiter);
+app.get("/health", (_req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "API is running",
+  });
+});
 
 app.use(
   "/api/docs",

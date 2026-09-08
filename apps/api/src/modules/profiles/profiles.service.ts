@@ -13,6 +13,7 @@ export class ProfilesService {
       return profile;
     }
 
+    // Falls back to creating the row for accounts predating the auth hook.
     return this.profilesRepository.upsert(userId, {});
   }
 

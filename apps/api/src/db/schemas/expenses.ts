@@ -26,6 +26,8 @@ export const expenses = pgTable("expenses", {
   ),
 });
 
+// Which receipt_members an expense (item) is split across — the item's
+// amount is divided equally between however many members are assigned here.
 export const expense_splits = pgTable(
   "expense_splits",
   {
