@@ -2,6 +2,9 @@ import request from "supertest";
 import { describe, expect, it } from "vitest";
 
 import { app } from "@/main";
+import { db } from "@/db";
+import { receipt_invites } from "@/db/schema";
+import { generateToken } from "@/utils/token";
 import { registerUser } from "./helpers/auth";
 
 const createReceipt = async (authHeader: string) => {
@@ -51,6 +54,75 @@ describe("Invites", () => {
     expect(response.body.data.invite_url).toBe(
       `http://localhost:5173/invite/${response.body.data.token}`,
     );
+  });
+
+  it("reuses a still-valid invite instead of minting a new one for the same guest", async () => {
+    const creator = await registerUser();
+    const receipt = await createReceipt(creator.authHeader);
+    const guest = await addGuest(
+      creator.authHeader,
+      receipt.id,
+      "Jan",
+    );
+
+    const first = await request(app)
+      .post(`/api/receipts/${receipt.id}/invites`)
+      .set("Authorization", creator.authHeader)
+      .send({ member_id: guest.id });
+
+    const second = await request(app)
+      .post(`/api/receipts/${receipt.id}/invites`)
+      .set("Authorization", creator.authHeader)
+      .send({ member_id: guest.id });
+
+    expect(second.status).toBe(201);
+    expect(second.body.data.token).toBe(
+      first.body.data.token,
+    );
+  });
+
+  it("returns 409 instead of 404 when a second invite for an already-claimed guest is accepted", async () => {
+    const creator = await registerUser();
+    const receipt = await createReceipt(creator.authHeader);
+    const guest = await addGuest(
+      creator.authHeader,
+      receipt.id,
+      "Jan",
+    );
+
+    const createResponse = await request(app)
+      .post(`/api/receipts/${receipt.id}/invites`)
+      .set("Authorization", creator.authHeader)
+      .send({ member_id: guest.id });
+
+    const staleToken = generateToken();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    await db.insert(receipt_invites).values({
+      receipt_id: receipt.id,
+      member_id: guest.id,
+      token: staleToken,
+      created_by: creator.userId,
+      expires_at: expiresAt,
+    });
+
+    const jan = await registerUser("Jan");
+
+    const firstAccept = await request(app)
+      .post(
+        `/api/invites/${createResponse.body.data.token}/accept`,
+      )
+      .set("Authorization", jan.authHeader);
+
+    expect(firstAccept.status).toBe(200);
+
+    const other = await registerUser();
+    const secondAccept = await request(app)
+      .post(`/api/invites/${staleToken}/accept`)
+      .set("Authorization", other.authHeader);
+
+    expect(secondAccept.status).toBe(409);
   });
 
   it("exposes a public preview of an invite without auth", async () => {
