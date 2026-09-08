@@ -143,6 +143,12 @@ describe("Receipt members", () => {
 
     expect(response.status).toBeGreaterThanOrEqual(400);
     expect(response.body.success).toBe(false);
+    expect(response.body.message).toBe("Validation failed");
+    expect(Array.isArray(response.body.errors)).toBe(true);
+    expect(response.body.errors[0]).toHaveProperty("path");
+    expect(response.body.errors[0]).toHaveProperty(
+      "message",
+    );
   });
 
   it("rejects a body with both user_id and guest_name", async () => {

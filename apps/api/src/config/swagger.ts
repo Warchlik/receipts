@@ -4,10 +4,10 @@ export const swaggerSpec = swaggerJSDoc({
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "Express TypeScript API",
+      title: "Receipts API",
       version: "1.0.0",
       description:
-        "API documentation for Express.js TypeScript template",
+        "API for splitting receipts across guest and authenticated members, invites, and expense splitting.",
     },
     servers: [
       {
@@ -21,16 +21,18 @@ export const swaggerSpec = swaggerJSDoc({
         description: "Health check endpoints",
       },
       {
-        name: "Examples",
-        description: "Example CRUD endpoints",
-      },
-      {
         name: "Receipts",
         description: "Receipt splitting endpoints",
       },
       {
         name: "Expenses",
-        description: "Expense line items attached to a receipt",
+        description:
+          "Expense line items attached to a receipt",
+      },
+      {
+        name: "Invites",
+        description:
+          "Invite tokens to join or claim a receipt member",
       },
       {
         name: "Profiles",
@@ -39,61 +41,6 @@ export const swaggerSpec = swaggerJSDoc({
     ],
     components: {
       schemas: {
-        Example: {
-          type: "object",
-          properties: {
-            id: {
-              type: "string",
-              format: "uuid",
-              example:
-                "550e8400-e29b-41d4-a716-446655440000",
-            },
-            name: {
-              type: "string",
-              example: "Example name",
-            },
-            description: {
-              type: "string",
-              nullable: true,
-              example: "Example description",
-            },
-            created_at: {
-              type: "string",
-              format: "date-time",
-            },
-            updated_at: {
-              type: "string",
-              format: "date-time",
-            },
-          },
-        },
-        CreateExampleInput: {
-          type: "object",
-          required: ["name"],
-          properties: {
-            name: {
-              type: "string",
-              example: "Example name",
-            },
-            description: {
-              type: "string",
-              example: "Example description",
-            },
-          },
-        },
-        UpdateExampleInput: {
-          type: "object",
-          properties: {
-            name: {
-              type: "string",
-              example: "Updated example name",
-            },
-            description: {
-              type: "string",
-              example: "Updated description",
-            },
-          },
-        },
         ErrorResponse: {
           type: "object",
           properties: {

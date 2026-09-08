@@ -26,6 +26,10 @@ export const receipts = pgTable("receipts", {
 
   amount: integer("amount").notNull(),
   currency: text("currency").notNull().default("PLN"),
+  // A static headcount estimate captured at creation time — NOT kept in
+  // sync with the actual number of receipt_members rows as people
+  // join/leave. Use receipt_members (or the settlement endpoint) for the
+  // live count.
   people_count: integer("people_count").notNull(),
   category: text("category").default("other"),
   purchase_at: timestamp("purchase_at"),

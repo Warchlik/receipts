@@ -18,7 +18,7 @@ export class InvitesService {
     private readonly invitesRepository: InvitesRepository,
     private readonly receiptsRepository: ReceiptsRepository,
     private readonly receiptsService: ReceiptsService,
-  ) { }
+  ) {}
 
   async createInvite(
     receiptId: string,
@@ -43,6 +43,21 @@ export class InvitesService {
           409,
           "This member is already linked to a user",
         );
+      }
+
+      // Reuse a still-valid invite for this guest instead of minting an
+      // unbounded number of parallel tokens for the same claim.
+      const existingInvite =
+        await this.invitesRepository.findActiveByMember(
+          receiptId,
+          memberId,
+        );
+
+      if (existingInvite) {
+        return {
+          ...existingInvite,
+          invite_url: `${env.CORS_ORIGIN}/invite/${existingInvite.token}`,
+        };
       }
     }
 
@@ -112,20 +127,49 @@ export class InvitesService {
     this.assertUsable(invite);
 
     const member = invite.member_id
-      ? await this.receiptsService.claimMember(
-        invite.receipt_id,
-        invite.member_id,
-        userId,
-      )
+      ? await this.claimInviteMember(
+          invite.receipt_id,
+          invite.member_id,
+          userId,
+        )
       : await this.receiptsService.addAuthUser(
-        invite.receipt_id,
-        invite.created_by,
-        userId,
-      );
+          invite.receipt_id,
+          invite.created_by,
+          userId,
+        );
 
     await this.invitesRepository.markUsed(invite.id);
 
     return member;
+  }
+
+  private async claimInviteMember(
+    receiptId: string,
+    memberId: string,
+    userId: string,
+  ): Promise<ReceiptMember> {
+    try {
+      return await this.receiptsService.claimMember(
+        receiptId,
+        memberId,
+        userId,
+      );
+    } catch (error) {
+      // A second, concurrent accept of this same invite loses the atomic
+      // claim after already passing assertUsable — report it as a stale
+      // invite (409) rather than the generic "member not found" (404).
+      if (
+        error instanceof ApiError &&
+        error.statusCode === 404
+      ) {
+        throw new ApiError(
+          409,
+          "This invite is no longer valid — it may have just been accepted elsewhere",
+        );
+      }
+
+      throw error;
+    }
   }
 
   private async assertIsCreator(
