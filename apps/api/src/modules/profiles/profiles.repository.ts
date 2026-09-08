@@ -13,9 +13,6 @@ export class ProfilesRepository {
     return profile ?? null;
   }
 
-  // Profile is 1:1 with a user and pre-created by the auth "user created"
-  // hook, but upsert keeps this safe for accounts created before that hook
-  // existed, or if the write ever races the hook.
   async upsert(
     userId: string,
     data: Partial<Omit<NewProfile, "id">>,

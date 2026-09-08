@@ -95,9 +95,6 @@ describe("Invites", () => {
       .set("Authorization", creator.authHeader)
       .send({ member_id: guest.id });
 
-    // Bypass the dedupe from the previous test to simulate two
-    // pre-existing, still-valid tokens for the same guest — the state a
-    // true race between two accept requests would leave behind.
     const staleToken = generateToken();
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);

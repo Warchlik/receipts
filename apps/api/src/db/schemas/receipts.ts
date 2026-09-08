@@ -26,10 +26,6 @@ export const receipts = pgTable("receipts", {
 
   amount: integer("amount").notNull(),
   currency: text("currency").notNull().default("PLN"),
-  // A static headcount estimate captured at creation time — NOT kept in
-  // sync with the actual number of receipt_members rows as people
-  // join/leave. Use receipt_members (or the settlement endpoint) for the
-  // live count.
   people_count: integer("people_count").notNull(),
   category: text("category").default("other"),
   purchase_at: timestamp("purchase_at"),
@@ -65,7 +61,6 @@ export const receipt_members = pgTable(
         onDelete: "cascade",
       }),
 
-    // Exactly one of user_id / guest_name is set — enforced below and in Zod.
     user_id: text("user_id").references(() => user.id, {
       onDelete: "cascade",
     }),
@@ -79,8 +74,6 @@ export const receipt_members = pgTable(
       .references(() => user.id),
 
     amount_owed: integer("amount_owed"),
-    // true once amount_owed has been explicitly set via PATCH — the split
-    // engine (see split-engine.ts) never overwrites an overridden member.
     amount_owed_override: boolean("amount_owed_override")
       .notNull()
       .default(false),

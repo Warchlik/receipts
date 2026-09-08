@@ -100,7 +100,6 @@ describe("Settlement", () => {
       receipt.id,
     );
 
-    // Solo receipt: creator owes their own 100 to nobody — nothing outstanding.
     expect(response.body.data.totalOutstanding).toBe(0);
   });
 
@@ -128,8 +127,6 @@ describe("Settlement", () => {
       bob.userId,
     );
 
-    // Creator marks their own share paid — this must stay purely
-    // informational and never inflate totalCollected.
     await request(app)
       .patch(
         `/api/receipts/${receipt.id}/members/${creatorMemberId}`,

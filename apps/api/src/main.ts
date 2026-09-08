@@ -11,8 +11,6 @@ import { swaggerSpec } from "./config/swagger";
 import { notFoundMiddleware } from "./middlewares/not-found.middleware";
 import { errorMiddleware } from "./middlewares/error.middleware";
 
-// Health checks (Docker, load balancers) must never be rejected by the
-// general rate limiter, so this route is registered before it.
 export const app = express();
 
 app.get("/health", (_req, res) => {
@@ -22,8 +20,6 @@ app.get("/health", (_req, res) => {
   });
 });
 
-// Auth endpoints get their own, tighter limit — brute-forcing sign-in
-// shouldn't be able to hide inside the shared general-API budget.
 const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 20,
@@ -46,10 +42,6 @@ app.use(
   }),
 );
 
-// POST /api/auth/sign-up/email
-// POST /api/auth/sign-in/email
-// POST /api/auth/sign-out
-// GET /api/auth/session
 app.use("/api/auth", authRateLimiter);
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
