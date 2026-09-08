@@ -217,9 +217,5 @@ receiptsRouter.patch(
   asyncHandler(receiptsController.claimMember),
 );
 
-// Expenses are always scoped to a receipt.
 receiptsRouter.use("/:id/expenses", expensesRouter);
-
-// Invites are always scoped to a receipt (creation, at least — accepting
-// an invite is handled by the standalone `invitesRouter`, see routes/index.ts).
 receiptsRouter.use("/:id/invites", receiptInvitesRouter);

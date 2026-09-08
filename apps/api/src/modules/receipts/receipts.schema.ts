@@ -29,8 +29,6 @@ const receiptBodySchema = z.object({
     .length(3, "Currency must be a 3-letter ISO code")
     .default("PLN"),
 
-  // Static headcount estimate, not reconciled with actual receipt_members —
-  // see the comment on the `people_count` column in db/schemas/receipts.ts.
   people_count: z
     .number()
     .int()
@@ -68,9 +66,6 @@ const addMemberBodySchema = z
       .min(1, "guest_name is required")
       .max(100, "guest_name is too long")
       .optional(),
-    // No `role` field here on purpose: "creator" is assigned exactly once,
-    // at receipt creation — a client-supplied role would let anyone mint
-    // additional co-equal creators via this endpoint.
     amount_owed: z
       .number()
       .int()
