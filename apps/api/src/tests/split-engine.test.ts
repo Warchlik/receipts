@@ -118,8 +118,6 @@ describe("Split engine — equal mode", () => {
       c.userId,
     );
 
-    // Override B's share to 50 — remaining 250 should split equally between
-    // the two non-overridden members (creator + C): 125 each.
     await request(app)
       .patch(
         `/api/receipts/${receipt.id}/members/${memberB.id}`,
@@ -209,7 +207,6 @@ describe("Split engine — itemized mode", () => {
       (m) => m.user_id === creator.userId,
     )!;
 
-    // Item 1: 60, shared by both -> 30/30
     const expense1 = await request(app)
       .post(`/api/receipts/${receipt.id}/expenses`)
       .set("Authorization", creator.authHeader)
@@ -222,7 +219,6 @@ describe("Split engine — itemized mode", () => {
       .set("Authorization", creator.authHeader)
       .send({ member_ids: [creatorMember.id, memberB.id] });
 
-    // Item 2: 40, only the creator -> 40/0
     const expense2 = await request(app)
       .post(`/api/receipts/${receipt.id}/expenses`)
       .set("Authorization", creator.authHeader)
